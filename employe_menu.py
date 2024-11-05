@@ -22,10 +22,10 @@ def voir_mes_info(email):
     connexion = connect_db()
     curseur = connexion.cursor()
     curseur.execute("""
-                    SELECT nom, prenom, age, poste, email, mot_de_passe, conge FROM users WHERE email = ? ORDER BY id
+                    SELECT nom, prenom, age, poste,departement, email, mot_de_passe, conge,salaire FROM users WHERE email = ? ORDER BY id
                     """, (email,))
     resultats = curseur.fetchall()
-    print(tabulate(resultats, headers=["Nom", "Prénom", "Âge", "Poste", "Email", "Mot De Passe" , "Congés"], tablefmt="grid"))
+    print(tabulate(resultats, headers=["Nom", "Prénom", "Âge", "Poste","Département", "Email", "Mot De Passe" , "Congés","Salaire"], tablefmt="grid"))
     connexion.close()
 
 def soumettre_demande_conge(email):
