@@ -2,6 +2,8 @@ import sqlite3
 from tabulate import tabulate
 from getpass import getpass
 import bcrypt
+from datetime import datetime
+from datetime import datetime, timedelta
 
 def connect_db():
     return sqlite3.connect("rh_data.db")
@@ -37,21 +39,21 @@ def voir_employe():
         choix= input("Taper 1 pour afficher tout les employers ou taper 2 pour choisir l'employé à afficher: ")
         if choix == "1":
             curseur.execute("""
-                SELECT nom, prenom, age, poste, email ,mot_de_passe,conge FROM users WHERE id != 1 ORDER BY id
+                SELECT nom, prenom, age, poste,departement, email,conge,salaire FROM users WHERE id != 1 ORDER BY id
             """)
             resultats = curseur.fetchall()
-            print(tabulate(resultats, headers=["Nom", "Prénom", "Âge", "Poste", "Email","mot de passe", "Congés"], tablefmt="grid"))
+            print(tabulate(resultats, headers=["Nom", "Prénom", "Âge", "Poste","Département", "Email", "Congés","Salaire"], tablefmt="grid"))
 
             connexion.close()
             break
         elif choix == "2":
             id = input("Veuillez entrer l'id de l'employé à afficher : ")
             curseur.execute("""
-                SELECT nom, prenom, age, poste, email, mot_de_passe,conge FROM users WHERE id = ? ORDER BY id
+                SELECT nom, prenom, age, poste,departement, email,conge,salaire FROM users WHERE id = ? ORDER BY id
             """, (id,))
             resultats = curseur.fetchall()
             if resultats:
-                print(tabulate(resultats, headers=["Nom", "Prénom", "Âge", "Poste", "Email", "Mot de Passe","Congés"], tablefmt="grid"))
+                print(tabulate(resultats, headers=["Nom", "Prénom", "Âge", "Poste","Département", "Email","Congés","Salaire"], tablefmt="grid"))
             else:
                 print(f"Aucun employé trouvé avec l'ID {id}.")
 
@@ -68,6 +70,7 @@ def ajouter_employe():
     prenom= input("Entre le prènom: ")
     age= input("Entre l'âge: ")
     poste= input("Entrer le poste: ")
+    departement = input("Entrer le département: ")
     email= input("Entrer l'adresse mail: ")
     x=True
     while x:
@@ -79,12 +82,13 @@ def ajouter_employe():
             print("Les mot de passe ne sont pas identiques! ")
     mot_de_passe_hash =bcrypt.hashpw(mot_de_passe.encode('utf-8'), bcrypt.gensalt())
     conge=input("Entrer le solde du congé: ")
+    salaire=input("Entrer le salaire: ")
     connexion =connect_db()
     curseur = connexion.cursor()
     curseur.execute("""
-                    INSERT INTO users (nom,prenom,age,poste,email,mot_de_passe,conge)
-                    VALUES (?,?,?,?,?,?,?)
-                    """,(nom,prenom,age,poste,email,mot_de_passe_hash,conge))
+                    INSERT INTO users (nom,prenom,age,poste,departement,email,mot_de_passe,conge,salaire)
+                    VALUES (?,?,?,?,?,?,?,?,?)
+                    """,(nom,prenom,age,poste,departement,email,mot_de_passe_hash,conge,salaire))
     connexion.commit()
     connexion.close()
     print("Employé ajouté avec succés")
@@ -95,7 +99,7 @@ def mettre_a_jour_employe():
 
     connexion = connect_db()
     curseur = connexion.cursor()
-    curseur.execute("SELECT nom, prenom, age, poste, email, mot_de_passe,conge FROM users WHERE id = ?", (id,))
+    curseur.execute("SELECT nom, prenom, age, poste, email, mot_de_passe,conge,salaire FROM users WHERE id = ?", (id,))
     employe = curseur.fetchone()
 
     if employe is None:
@@ -103,7 +107,7 @@ def mettre_a_jour_employe():
         return
     
     print("\nInformations actuelles :")
-    print(f"Nom : {employe[0]}, Prénom : {employe[1]}, Âge : {employe[2]}, Poste : {employe[3]}, Email : {employe[4]}")
+    print(f"Nom : {employe[0]}, Prénom : {employe[1]}, Âge : {employe[2]}, Poste : {employe[3]}, Email : {employe[4]}, Congés : {employe[6]} , Salaire :  {employe[7]}")
 
     nom = input(f"Entre le nouveau nom (actuel : {employe[0]} ou appuyer sur Entrée pour ne pas changer) : ") or employe[0]
     prenom = input(f"Entre le nouveau prénom (actuel : {employe[1]} ou appuyer sur Entrée pour ne pas changer) : ") or employe[1]
@@ -112,6 +116,7 @@ def mettre_a_jour_employe():
     email = input(f"Entre la nouvelle adresse mail (actuel : {employe[4]} ou appuyer sur Entrée pour ne pas changer) : ") or employe[4]
     mot_de_passe = getpass("Entrer le nouveau mot de passe (appuyer sur Entrée pour ne pas changer) : ") or employe[5]
     conge = input(f"Entre le nouveau solde du congé (actuel : {employe[6]} ou appuyer sur Entrée pour ne pas changer) : ") or employe[6]
+    salaire = input(f"Entre le nouveau salaire (actuel : {employe[7]} ou appuyer sur Entrée pour ne pas changer) : ") or employe[7]
     mot_de_passe_hash =bcrypt.hashpw(mot_de_passe.encode('utf-8'), bcrypt.gensalt())
     curseur.execute("""
                     UPDATE users
@@ -121,9 +126,10 @@ def mettre_a_jour_employe():
                         poste = ?,
                         email = ?,
                         mot_de_passe = ?,
-                        conge=?
+                        conge=?,
+                        salaire=?
                     WHERE id = ?;""",
-                    (nom, prenom, age, poste, email, mot_de_passe_hash, conge, id))
+                    (nom, prenom, age, poste, email, mot_de_passe_hash, conge,salaire, id))
     
     connexion.commit()
     print("Informations mises à jour avec succès.")
@@ -142,10 +148,6 @@ def voir_demandes_conges():
         print("Aucune demande de congé à afficher.")
 
     connexion.close()
-
-from datetime import datetime
-
-from datetime import datetime, timedelta
 
 def compter_jours_de_conge(date_debut, date_fin):
     """ Fonction pour compter le nombre de jours de congé en excluant les samedis et dimanches. """
