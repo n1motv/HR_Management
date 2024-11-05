@@ -25,10 +25,12 @@ def cree_table_utilisateurs():
                     nom TEXT , 
                     prenom TEXT, 
                     age INT , 
-                    poste TEXT, 
+                    poste TEXT,
+                    departement TEXT, 
                     email type UNIQUE, 
                     mot_de_passe TEXT,
                     conge FLOAT,
+                    salaire FLOAT,
                     dernier_mois_maj TEXT)""")
         connexion.commit()
         connexion.close()
@@ -82,16 +84,18 @@ def cree_compte_admin():
     prenom= "admin"
     age =30
     poste = "Administrateur"
+    departement = "rh"
     email="admin"
     mot_de_passe = bcrypt.hashpw("admin".encode('utf-8'), bcrypt.gensalt())
     conge = 0
+    salaire=0
     connexion = connect_db()
     curseur = connexion.cursor()
 
     curseur.execute("""
-                    INSERT INTO users (nom,prenom,age,poste,email,mot_de_passe,conge)
-                    VALUES (?,?,?,?,?,?,?)
-                    """,(nom,prenom,age,poste,email,mot_de_passe,conge))
+                    INSERT INTO users (nom,prenom,age,poste,departement,email,mot_de_passe,conge,salaire)
+                    VALUES (?,?,?,?,?,?,?,?,?)
+                    """,(nom,prenom,age,poste,departement,email,mot_de_passe,conge,salaire))
     connexion.commit()
     connexion.close()
     print("Compte admin crée avec succès. ")
