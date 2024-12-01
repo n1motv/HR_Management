@@ -47,7 +47,6 @@ Un système de gestion des ressources humaines (RH) permettant aux administrateu
 1. Lancer l'application :
 
   ```bash
-Copier le code
 python main.py
   ```
 2. Connexion :
